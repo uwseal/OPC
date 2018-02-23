@@ -14,7 +14,7 @@
 #define YM 8   
 #define XP 9  
 
-#define TS_MINX 156
+#define TS_MINX 113
 #define TS_MINY 133
 #define TS_MAXX 945
 #define TS_MAXY 898
@@ -57,17 +57,24 @@ void loop(void) {
   int yCord = 320 - map(p.x, TS_MAXX, TS_MINX, 0, 320);
 
   if(p.z>0){
+     Serial.print("RAW: ");
+     Serial.print("X = "); Serial.print(p.x);
+     Serial.print("\tY = "); Serial.print(p.y);
+     Serial.print("\n");
+    
      Serial.print("Calc ");
      Serial.print("X = "); Serial.print(xCord);
      Serial.print("\tY = "); Serial.print(yCord);
-     Serial.print("\n"); 
+     Serial.print("\n\n"); 
   }
 
   pinMode(XM, OUTPUT);
   pinMode(YP, OUTPUT);
    
   if (State == Home){
-
+    
+    // Update rect is needed so it dosn't constantly draw rectangles in loop
+    // They remain the same so they only need to be updated once
     if (updateRect){
       tft.fillScreen(BLACK); // Clear screen
       
@@ -80,8 +87,8 @@ void loop(void) {
 
       updateRect = false;
     }
-    
-    tft.setCursor(45, 10);
+
+    tft.setCursor(47, 10);
     tft.setTextColor(RED);  
     tft.setTextSize(3);
     tft.println("AreoSpec");
@@ -114,12 +121,12 @@ void loop(void) {
       tft.setCursor(0, 0);
       tft.fillRect(0,0,240,40,WHITE);
   
-      tft.fillRect(0,260,240,60,GREEN);
+      tft.fillRect(0,260,240,60,GREEN);                             //TODO Change rectange status to change with AQI
             
       updateRect = false;
     }
     
-    tft.setCursor(45, 10);
+    tft.setCursor(47, 10);
     tft.setTextColor(RED);  
     tft.setTextSize(3);
     tft.println("AreoSpec");
@@ -158,7 +165,7 @@ void loop(void) {
       updateRect = false;
     }
 
-    tft.setCursor(45, 10);
+    tft.setCursor(47, 10);
     tft.setTextColor(RED);  
     tft.setTextSize(3);
     tft.println("AreoSpec");    
@@ -166,7 +173,7 @@ void loop(void) {
     tft.setCursor(0, 50);
     tft.setTextColor(WHITE); 
     tft.setTextSize(2);
-    tft.println("      Particle ");                     // TODO Add values at end of setences
+    tft.println("      Particle ");                            // TODO Add values at end of setences
     tft.println("   Concentraiton"); 
     tft.println("   Units in ug/m3");
     tft.setTextSize(2);
