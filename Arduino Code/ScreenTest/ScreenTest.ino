@@ -9,10 +9,10 @@
 
 #define LCD_RESET A4 
 
-#define YP A2  // must be an analog pin, use "An" notation!
-#define XM A3  // must be an analog pin, use "An" notation!
-#define YM 8   // can be a digital pin
-#define XP 9   // can be a digital pin
+#define YP A2  
+#define XM A3  
+#define YM 8   
+#define XP 9  
 
 #define TS_MINX 156
 #define TS_MINY 133
@@ -30,7 +30,7 @@
 
 Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
-enum Screen {Home, AQI, Detail};
+enum Screen {Home, AQI, Data};
 Screen State;
 boolean updateRect;
 
@@ -63,27 +63,25 @@ void loop(void) {
      Serial.print("\n"); 
   }
 
-
-
   pinMode(XM, OUTPUT);
   pinMode(YP, OUTPUT);
    
   if (State == Home){
 
     if (updateRect){
-      tft.fillScreen(BLACK);
+      tft.fillScreen(BLACK); // Clear screen
       
       tft.fillRect(0,0,240,40,WHITE);
       tft.drawRect(0,0,240,40,WHITE);
 
       tft.fillRect(40,100,150,60,CYAN);
-      tft.drawRect(40,100,150,60,BLACK);
+
+      tft.fillRect(40,190,150,60,YELLOW);
 
       updateRect = false;
-      delay(10);  
     }
     
-    tft.setCursor(40, 10);
+    tft.setCursor(45, 10);
     tft.setTextColor(RED);  
     tft.setTextSize(3);
     tft.println("AreoSpec");
@@ -93,69 +91,107 @@ void loop(void) {
     tft.setTextSize(3);
     tft.println("AQI");
 
+    tft.setCursor(45, 205);
+    tft.setTextColor(BLACK);  
+    tft.setTextSize(3);
+    tft.println("Particle");
+
     if(xCord>40 && xCord<190 && yCord>100 && yCord<160 && p.z>0) {
       State = AQI;
       updateRect = true;
     }
 
-    
+    if(xCord>40 && xCord<190 && yCord>190 && yCord<250 && p.z>0) {
+      State = Data;
+      updateRect = true;
+    }
+  
   } else if (State == AQI){
 
     if (updateRect) {
-      tft.fillScreen(BLACK);
+      tft.fillScreen(BLACK); // Clear Screen
       
       tft.setCursor(0, 0);
       tft.fillRect(0,0,240,40,WHITE);
-      tft.drawRect(0,0,240,40,WHITE);
   
-      tft.fillRect(0,40,240,60,GREEN);
-      tft.drawRect(0,40,240,60,GREEN);
-
-      tft.drawRect(0,220,240,100,WHITE);
-           
+      tft.fillRect(0,260,240,60,GREEN);
+            
       updateRect = false;
-      delay(10);  
     }
     
-    tft.setCursor(40, 10);
+    tft.setCursor(45, 10);
     tft.setTextColor(RED);  
     tft.setTextSize(3);
     tft.println("AreoSpec");
   
-    tft.setCursor(25, 45);
+    tft.setCursor(25, 265);
     tft.setTextColor(BLACK);  
     tft.setTextSize(3);
     tft.println("Air Quality");
   
-    tft.setCursor(0, 70);
+    tft.setCursor(0, 290);
     tft.setTextColor(BLACK);  
     tft.setTextSize(3);
     tft.println("    Clean");
   
-    tft.setCursor(60, 110);
+    tft.setCursor(55, 80);
     tft.setTextColor(WHITE); 
-    tft.setTextSize(7);
+    tft.setTextSize(8);
     tft.println("AQI");
   
-    tft.setCursor(110, 170);
+    tft.setCursor(100, 170);
     tft.setTextColor(GREEN); 
-    tft.setTextSize(5);
-    tft.println("0");
-  
-    tft.setCursor(0, 223);
-    tft.setTextColor(WHITE); 
-    tft.setTextSize(2);
-    tft.println(" NumP0.3-0.5  : ");
-    tft.println(" NumP0.5-1.0  : ");
-    tft.println(" NumP1.0-2.5  : ");
-    tft.println(" NumP2.5-5.0  : ");
-    tft.println(" NumP5.0-10.0 : ");
-    tft.println(" NumP10.0     : ");
+    tft.setTextSize(10);
+    tft.println("0");                                                         // TODO have real AQI value here
 
     if(xCord>0 && xCord<240 && yCord>0 &&yCord<40 && p.z>0) {
       State = Home;
       updateRect = true;
     }
+  }else if (State == Data) {
+    
+    if (updateRect){
+      tft.fillScreen(BLACK); // Clear Screen
+      
+      tft.fillRect(0,0,240,40,WHITE);
+
+      updateRect = false;
+    }
+
+    tft.setCursor(45, 10);
+    tft.setTextColor(RED);  
+    tft.setTextSize(3);
+    tft.println("AreoSpec");    
+
+    tft.setCursor(0, 50);
+    tft.setTextColor(WHITE); 
+    tft.setTextSize(2);
+    tft.println("      Particle ");                     // TODO Add values at end of setences
+    tft.println("   Concentraiton"); 
+    tft.println("   Units in ug/m3");
+    tft.setTextSize(2);
+    tft.println(" 1.0  um : ");
+    tft.println(" 2.5  um : ");
+    tft.println(" 10.0 um : ");
+
+    tft.println("");
+    tft.setTextSize(2);
+    tft.println("Number of Particles");                        // TODO Add values at end of setences
+    tft.println(" within size range"); 
+    tft.println("   Units in 0.1 L");
+    tft.setTextSize(2);
+    tft.println(" 0.3-0.5  um : ");
+    tft.println(" 0.5-1.0  um : ");
+    tft.println(" 1.0-2.5  um : ");
+    tft.println(" 2.5-5.0  um : ");
+    tft.println(" 5.0-10.0 um : ");
+    tft.println(" 10.0 +   um : ");
+    
+    if(xCord>0 && xCord<240 && yCord>0 &&yCord<40 && p.z>0) {
+      State = Home;
+      updateRect = true;
+    }
+    
   }
   
 }
