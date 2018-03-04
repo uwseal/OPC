@@ -12,7 +12,6 @@ unsigned short startChar_1, startChar_2, framelength,
          NumP_0_3, NumP_0_5, NumP_1_0, NumP_2_5, NumP_5_0, NumP_10_0,
          Reserved, Data_Check;
 
-
 unsigned char read();
 unsigned short readField(char field[]);
 void recordData();
@@ -548,6 +547,5 @@ void updateScreen() {
       State = Home;
       updateRect = true;
     }
-
   }
 }
