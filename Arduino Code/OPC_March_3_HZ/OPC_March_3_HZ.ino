@@ -75,6 +75,9 @@ Label NumP_2_5Label(150, 258, 100, 16, &tft);
 Label NumP_5_0Label(150, 274, 100, 16, &tft);
 Label NumP_10_0Label(150, 290, 100, 16, &tft);
 
+Label aeroSpecLabel(0, 0, 240, 50, &tft);
+Label aqiLabel(40, 100, 150, 60, &tft);
+Label particleLabel(40, 190, 150, 60, &tft);
 
 
 void setup()
@@ -417,14 +420,18 @@ void sendBluetooth()
 }
 
 void initializeScreen() {
-  // Draw the AeroSpec button background.
-  tft.fillRect(0, 0, 240, 40, WHITE);
+  aeroSpecLabel.setColor(RED, WHITE);
+  aeroSpecLabel.setCentered(true);
+  aeroSpecLabel.setSize(3);
+  aeroSpecLabel.update("AeroSpec");
 
-  // Draw the AeroSpec home button text.
-  tft.setCursor(47, 10);
-  tft.setTextColor(RED);
-  tft.setTextSize(3);
-  tft.println("AeroSpec");
+  aqiLabel.setColor(BLACK, CYAN);
+  aqiLabel.setCentered(true);
+  aqiLabel.setSize(3);
+
+  particleLabel.setColor(BLACK, YELLOW);
+  particleLabel.setCentered(true);
+  particleLabel.setSize(3);
 
 }
 
@@ -455,7 +462,7 @@ void updateScreen() {
   currentState = nextState;
 
   if (updateRect) {
-    tft.fillRect(0, 41, 240, 320, BLACK);
+    tft.fillRect(0, 61, 240, 320, BLACK);
   }
 
   if (currentState == Home) {
@@ -463,29 +470,27 @@ void updateScreen() {
     // Update rect is needed so it dosn't constantly draw rectangles in loop
     // They remain the same so they only need to be updated once
     if (updateRect) {
+      aqiLabel.update("AQI");
+      particleLabel.update("Particle");
 
-      tft.fillRect(40, 100, 150, 60, CYAN);
-      tft.setCursor(90, 115);
-      tft.setTextColor(BLACK);
-      tft.setTextSize(3);
-      tft.println("AQI");
-
-      tft.fillRect(40, 190, 150, 60, YELLOW);
-
-      tft.setCursor(45, 205);
-      tft.setTextColor(BLACK);
-      tft.setTextSize(3);
-      tft.println("Particle");
     }
 
-    if (xCord > 40 && xCord < 190 && yCord > 100 && yCord < 160 && p.z > 0) {
+    if (aqiLabel.contains(xCord, yCord) && p.z > 0) {
       nextState = AQI;
-
     }
 
-    if (xCord > 40 && xCord < 190 && yCord > 190 && yCord < 250 && p.z > 0) {
+
+    if (particleLabel.contains(xCord, yCord) && p.z > 0) {
       nextState = Data;
     }
+
+    //
+    //Label aqiLabel(40, 100, 150, 60, &tft);
+    //Label particleLabel(40, 190, 150, 60, &tft);
+    //
+    //    if (xCord > 40 && xCord < 190 && yCord > 190 && yCord < 250 && p.z > 0) {
+    //      nextState = Data;
+    //    }
   } else if (currentState == AQI) {
 
     if (updateRect) {
@@ -506,13 +511,11 @@ void updateScreen() {
       tft.println("AQI");
     }
 
-    // TODO(jrh) add flag to only update on change of the text.
     tft.setCursor(60, 170);
     tft.setTextColor(GREEN);
     tft.setTextSize(10);
-    tft.fillRect(0, 170, 240, 80, BLACK); // TODO Only update if AQI value changed
-
-    if (xCord > 0 && xCord < 240 && yCord > 0 && yCord < 40 && p.z > 0) {
+    
+    if(aeroSpecLabel.contains(xCord, yCord) && p.z > 0) {
       nextState = Home;
     }
   } else if (currentState == Data) {
@@ -556,9 +559,8 @@ void updateScreen() {
     NumP_2_5Label.update(NumP_2_5);
     NumP_5_0Label.update(NumP_5_0);
     NumP_10_0Label.update(NumP_10_0);
-
-
-    if (xCord > 0 && xCord < 240 && yCord > 0 && yCord < 40 && p.z > 0) {
+    
+    if(aeroSpecLabel.contains(xCord, yCord) && p.z > 0) {
       nextState = Home;
     }
   }

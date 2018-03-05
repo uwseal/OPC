@@ -13,16 +13,29 @@ void Label::setColor(uint16_t foreground, uint16_t background) {
   this->backgroundColor = background;
 }
 
+void Label::setCentered(bool centered) {
+  this->centered = centered;
+}
+
+void Label::setSize(uint8_t size) {
+  this->size = size;
+}
+
 void Label::update(const char* text) {
   // Used to center the string inside the label area.
   uint16_t strLen = strlen(text);
-  // Get the size of the text.  The text size is this size * (6, 8) for
-  // width and height respectively.
-  uint16_t size = 2;
   // Draw the bacground color of the lable.
   tft->fillRect(x, y, width, height, backgroundColor);
-  // Set the location of the text to draw.
-  tft->setCursor(x, y);
+  if (centered) {
+    tft->setCursor(x + width / 2 - strLen * 6 * size / 2, y + height / 2 - size * 8 / 2);
+  } else {
+    // Set the location of the text to draw.
+    tft->setCursor(x, y);
+  }
+  // Update the size of the text.
+  tft->setTextSize(size);
+  // Update the color of the text.
+  tft->setTextColor(foregroundColor);
   // Print the actual text to the tft screen.
   tft->print(text);
 }
@@ -42,7 +55,7 @@ void Label::clear() {
 }
 
 bool Label::contains(uint16_t x, uint16_t y) {
-  return x > this->x && x < this->x + this->width &&
-         y > this->y && y < this->y + this->height;
+  return x > this->x && x < (this->x + this->width) &&
+         y > this->y && y < (this->y + this->height);
 }
 

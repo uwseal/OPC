@@ -24,6 +24,10 @@ class Label {
     uint16_t backgroundColor = 0x0000;
     /// Contains the foreground color of the label.
     uint16_t foregroundColor = 0xFFFF;
+    /// TODO(jrh) document.
+    bool centered = false;
+    /// TODO(jrh) document.
+    uint8_t size = 2;
     /// The TFT reference to draw to the lcd display.
     Elegoo_TFTLCD *tft;
     
@@ -45,6 +49,10 @@ class Label {
        @param background The background color code for the Label.
     */
     void setColor(uint16_t foreground, uint16_t background);
+
+    void setCentered(bool centered);
+
+    void setSize(uint8_t size);
 
     /**
        @brief Updates the contents of the Label.
