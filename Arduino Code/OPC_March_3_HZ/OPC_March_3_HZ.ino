@@ -2,6 +2,8 @@
 #include <Elegoo_TFTLCD.h> // Hardware-specific library
 #include <TouchScreen.h>   // Touchscreen library
 
+#include "Label.h"
+
 unsigned char data_hi;
 unsigned char data_lo;
 int AQI_max, AQI_min, PM_max, PM_min, AQI_1_0, AQI_2_5, AQI_10_0;
@@ -12,6 +14,8 @@ unsigned short startChar_1, startChar_2, framelength,
          NumP_0_3, NumP_0_5, NumP_1_0, NumP_2_5, NumP_5_0, NumP_10_0,
          Reserved, Data_Check;
 
+bool updateAQI = false;
+
 unsigned char read();
 unsigned short readField(char field[]);
 void recordData();
@@ -20,6 +24,8 @@ bool dataCheck();
 void calculateAQI();
 void sendBluetooth();
 void updateScreen();
+
+
 
 #define LCD_CS A3
 #define LCD_CD A2
@@ -56,8 +62,20 @@ void updateScreen();
 Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 enum Screen {Home, AQI, Data};
-Screen State;
-boolean updateRect;
+Screen currentState, nextState;
+
+Label PM_1_0Label(120, 98, 60, 16, &tft);
+Label PM_2_5Label(120, 114, 60, 16, &tft);
+Label PM_10_0Label(120, 130, 60, 16, &tft);
+
+Label NumP_0_3Label(150, 210, 100, 16, &tft);
+Label NumP_0_5Label(150, 226, 100, 16, &tft);
+Label NumP_1_0Label(150, 242, 100, 16, &tft);
+Label NumP_2_5Label(150, 258, 100, 16, &tft);
+Label NumP_5_0Label(150, 274, 100, 16, &tft);
+Label NumP_10_0Label(150, 290, 100, 16, &tft);
+
+
 
 void setup()
 {
@@ -74,10 +92,12 @@ void setup()
   tft.begin(0x9341);
 
   tft.fillScreen(BLACK);
-  State = Home;
-  updateRect = true;
+  currentState = Data;
+  nextState = Home;
 
   pinMode(13, OUTPUT);
+
+  initializeScreen();
 }
 
 void loop()
@@ -88,18 +108,21 @@ void loop()
   if (startChar_1 == 0x42)
   {
     Serial.println(startChar_1, HEX);
-    
+
     startChar_2 = read(); // Second Fixed Byte
     if (startChar_2 == 0x4D) {
       Serial.println(startChar_2, HEX);
       sum = 0x42 + 0x4D;
-      
+
       recordData();
       if (dataCheck())
       {
         calculateAQI();
         sendBluetooth();
+        uint32_t test = millis();
         updateScreen();
+        Serial.print("Update: ");
+        Serial.println(millis() - test);
       }
     }
   }
@@ -162,6 +185,8 @@ void recordData()
   Reserved = readField("Reserved        ");
   Data_Check = check_Code("Data Check      ");
 
+
+
 }
 
 unsigned short check_Code(char field[])
@@ -172,12 +197,12 @@ unsigned short check_Code(char field[])
   Serial.println(data_hi, HEX);
   Serial.print("Data Check      ");
   Serial.println(data_lo, HEX);
-  return (data_hi << 8) + data_lo;  
+  return (data_hi << 8) + data_lo;
 }
 
 bool dataCheck()
 {
-  unsigned short check_sum = sum;         
+  unsigned short check_sum = sum;
   Serial.println();
   Serial.println(Data_Check, HEX);
   Serial.println(check_sum, HEX);
@@ -391,6 +416,17 @@ void sendBluetooth()
   Serial2.println(NumP_10_0);
 }
 
+void initializeScreen() {
+  // Draw the AeroSpec button background.
+  tft.fillRect(0, 0, 240, 40, WHITE);
+
+  // Draw the AeroSpec home button text.
+  tft.setCursor(47, 10);
+  tft.setTextColor(RED);
+  tft.setTextSize(3);
+  tft.println("AeroSpec");
+
+}
 
 void updateScreen() {
   digitalWrite(13, HIGH);
@@ -415,137 +451,115 @@ void updateScreen() {
   pinMode(XM, OUTPUT);
   pinMode(YP, OUTPUT);
 
-  if (State == Home) {
+  bool updateRect = currentState != nextState;
+  currentState = nextState;
+
+  if (updateRect) {
+    tft.fillRect(0, 41, 240, 320, BLACK);
+  }
+
+  if (currentState == Home) {
 
     // Update rect is needed so it dosn't constantly draw rectangles in loop
     // They remain the same so they only need to be updated once
     if (updateRect) {
-      tft.fillScreen(BLACK); // Clear screen
-
-      tft.fillRect(0, 0, 240, 40, WHITE);
-      tft.drawRect(0, 0, 240, 40, WHITE);
 
       tft.fillRect(40, 100, 150, 60, CYAN);
+      tft.setCursor(90, 115);
+      tft.setTextColor(BLACK);
+      tft.setTextSize(3);
+      tft.println("AQI");
 
       tft.fillRect(40, 190, 150, 60, YELLOW);
 
-      updateRect = false;
+      tft.setCursor(45, 205);
+      tft.setTextColor(BLACK);
+      tft.setTextSize(3);
+      tft.println("Particle");
     }
 
-    tft.setCursor(47, 10);
-    tft.setTextColor(RED);
-    tft.setTextSize(3);
-    tft.println("AeroSpec");
-
-    tft.setCursor(90, 115);
-    tft.setTextColor(BLACK);
-    tft.setTextSize(3);
-    tft.println("AQI");
-
-    tft.setCursor(45, 205);
-    tft.setTextColor(BLACK);
-    tft.setTextSize(3);
-    tft.println("Particle");
-
     if (xCord > 40 && xCord < 190 && yCord > 100 && yCord < 160 && p.z > 0) {
-      State = AQI;
-      updateRect = true;
+      nextState = AQI;
+
     }
 
     if (xCord > 40 && xCord < 190 && yCord > 190 && yCord < 250 && p.z > 0) {
-      State = Data;
-      updateRect = true;
+      nextState = Data;
     }
-
-  } else if (State == AQI) {
+  } else if (currentState == AQI) {
 
     if (updateRect) {
-      tft.fillScreen(BLACK); // Clear Screen
 
-      tft.setCursor(0, 0);
-      tft.fillRect(0, 0, 240, 40, WHITE);
+      tft.setCursor(25, 265);
+      tft.setTextColor(BLACK);
+      tft.setTextSize(3);
+      tft.println("Air Quality");
 
-      tft.fillRect(0, 260, 240, 60, GREEN);                         //TODO Change rectange status to change with AQI
+      tft.setCursor(0, 290);
+      tft.setTextColor(BLACK);
+      tft.setTextSize(3);
+      tft.println("    Clean");
 
-      updateRect = false;
+      tft.setCursor(55, 80);
+      tft.setTextColor(WHITE);
+      tft.setTextSize(8);
+      tft.println("AQI");
     }
 
-    tft.setCursor(47, 10);
-    tft.setTextColor(RED);
-    tft.setTextSize(3);
-    tft.println("AeroSpec");
-
-    tft.setCursor(25, 265);
-    tft.setTextColor(BLACK);
-    tft.setTextSize(3);
-    tft.println("Air Quality");
-
-    tft.setCursor(0, 290);
-    tft.setTextColor(BLACK);
-    tft.setTextSize(3);
-    tft.println("    Clean");
-
-    tft.setCursor(55, 80);
-    tft.setTextColor(WHITE);
-    tft.setTextSize(8);
-    tft.println("AQI");
-
+    // TODO(jrh) add flag to only update on change of the text.
     tft.setCursor(60, 170);
     tft.setTextColor(GREEN);
     tft.setTextSize(10);
     tft.fillRect(0, 170, 240, 80, BLACK); // TODO Only update if AQI value changed
-    tft.println(AQI_2_5);
 
     if (xCord > 0 && xCord < 240 && yCord > 0 && yCord < 40 && p.z > 0) {
-      State = Home;
-      updateRect = true;
+      nextState = Home;
     }
-  } else if (State == Data) {
+  } else if (currentState == Data) {
 
     if (updateRect) {
-      tft.fillScreen(BLACK); // Clear Screen
 
-      tft.fillRect(0, 0, 240, 40, WHITE);
+      tft.setCursor(0, 50);
+      tft.setTextColor(WHITE);
+      tft.setTextSize(2);
+      tft.println("      Particle ");                            // TODO Add values at end of setences
+      tft.println("   Concentraiton");
+      tft.println("   Units in ug/m3");
 
-      updateRect = false;
+
+      tft.println(" 1.0  um :");
+      tft.println(" 2.5  um :");
+      tft.println(" 10.0 um :");
+
+
+      tft.println();
+
+      tft.println("Number of Particles");
+      tft.println(" within size range");
+      tft.println("   Units in 0.1 L");
+
+      tft.println(" 0.3-0.5 um:");
+      tft.println(" 0.5-1.0 um:");
+      tft.println(" 1.0-2.5 um:");
+      tft.println(" 2.5-5.0 um:");
+      tft.println(" 5.0-10.0um:");
+      tft.println(" 10.0 +  um:");
     }
 
-    tft.setCursor(47, 10);
-    tft.setTextColor(RED);
-    tft.setTextSize(3);
-    tft.println("AeroSpec");
+    PM_1_0Label.update(PM_1_0);
+    PM_2_5Label.update(PM_2_5);
+    PM_10_0Label.update(PM_10_0);
 
-    tft.setCursor(0, 50);
-    tft.setTextColor(WHITE);
-    tft.setTextSize(2);
-    tft.println("      Particle ");                            // TODO Add values at end of setences
-    tft.println("   Concentraiton");
-    tft.println("   Units in ug/m3");
-    tft.setTextSize(2);
-    tft.fillRect(130, 100, 120, 60, BLACK);
-    tft.println(" 1.0  um : " + (String)PM_1_0);
-    tft.println(" 2.5  um : " + (String)PM_2_5);
-    tft.println(" 10.0 um : " + (String)PM_10_0);
-
-
-    tft.println("");
-    tft.setTextSize(2);
-    tft.println("Number of Particles");
-    tft.println(" within size range");
-    tft.println("   Units in 0.1 L");
-    tft.setTextSize(2);
-    tft.fillRect(155, 200, 80, 180, BLACK);
-    tft.println(" 0.3-0.5 um: " + (String)NumP_0_3);
-    tft.println(" 0.5-1.0 um: " + (String)NumP_0_5);
-    tft.println(" 1.0-2.5 um: " + (String)NumP_1_0);
-    tft.println(" 2.5-5.0 um: " + (String)NumP_2_5);
-    tft.println(" 5.0-10.0um: " + (String)NumP_5_0);
-    tft.println(" 10.0 +  um: " + (String)NumP_10_0);
+    NumP_0_3Label.update(NumP_0_3);
+    NumP_0_5Label.update(NumP_0_5);
+    NumP_1_0Label.update(NumP_1_0);
+    NumP_2_5Label.update(NumP_2_5);
+    NumP_5_0Label.update(NumP_5_0);
+    NumP_10_0Label.update(NumP_10_0);
 
 
     if (xCord > 0 && xCord < 240 && yCord > 0 && yCord < 40 && p.z > 0) {
-      State = Home;
-      updateRect = true;
+      nextState = Home;
     }
   }
 }
