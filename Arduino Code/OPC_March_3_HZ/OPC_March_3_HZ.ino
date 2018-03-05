@@ -105,27 +105,36 @@ void setup()
 
 void loop()
 {
-  sum = 0;
-  // send data only when you receive Start Character:
-  startChar_1 = read();
-  if (startChar_1 == 0x42)
-  {
-    Serial.println(startChar_1, HEX);
+  if (Serial1.available() && Serial1.peek() != 0x42) {
+    Serial.println("Not 0x42");
+    Serial1.read();
+    return;
+  }
 
-    startChar_2 = read(); // Second Fixed Byte
-    if (startChar_2 == 0x4D) {
-      Serial.println(startChar_2, HEX);
-      sum = 0x42 + 0x4D;
+  if (Serial1.available() < 32) {
+    updateScreen();
+  } else {
 
-      recordData();
-      if (dataCheck())
-      {
-        calculateAQI();
-        sendBluetooth();
-        uint32_t test = millis();
-        updateScreen();
-        Serial.print("Update: ");
-        Serial.println(millis() - test);
+    // send data only when you receive Start Character:
+    startChar_1 = read();
+    if (startChar_1 == 0x42)
+    {
+      Serial.println(startChar_1, HEX);
+
+      startChar_2 = read(); // Second Fixed Byte
+      if (startChar_2 == 0x4D) {
+        Serial.println(startChar_2, HEX);
+        sum = 0x42 + 0x4D;
+
+        recordData();
+        if (dataCheck())
+        {
+          calculateAQI();
+          sendBluetooth();
+          updateAQI = true;
+          updateScreen();
+          updateAQI = false;
+        }
       }
     }
   }
@@ -462,7 +471,7 @@ void updateScreen() {
   currentState = nextState;
 
   if (updateRect) {
-    tft.fillRect(0, 61, 240, 320, BLACK);
+    tft.fillRect(0, 51, 240, 320, BLACK);
   }
 
   if (currentState == Home) {
@@ -472,25 +481,17 @@ void updateScreen() {
     if (updateRect) {
       aqiLabel.update("AQI");
       particleLabel.update("Particle");
-
     }
 
     if (aqiLabel.contains(xCord, yCord) && p.z > 0) {
       nextState = AQI;
     }
 
-
     if (particleLabel.contains(xCord, yCord) && p.z > 0) {
       nextState = Data;
     }
 
-    //
-    //Label aqiLabel(40, 100, 150, 60, &tft);
-    //Label particleLabel(40, 190, 150, 60, &tft);
-    //
-    //    if (xCord > 40 && xCord < 190 && yCord > 190 && yCord < 250 && p.z > 0) {
-    //      nextState = Data;
-    //    }
+
   } else if (currentState == AQI) {
 
     if (updateRect) {
@@ -511,13 +512,20 @@ void updateScreen() {
       tft.println("AQI");
     }
 
+    if (aeroSpecLabel.contains(xCord, yCord) && p.z > 0) {
+      nextState = Home;
+    }
+    
+    // Only update the text if there is new sensor data.
+    if (!updateAQI) {
+      return;
+    }
+
     tft.setCursor(60, 170);
     tft.setTextColor(GREEN);
     tft.setTextSize(10);
-    
-    if(aeroSpecLabel.contains(xCord, yCord) && p.z > 0) {
-      nextState = Home;
-    }
+
+
   } else if (currentState == Data) {
 
     if (updateRect) {
@@ -549,6 +557,16 @@ void updateScreen() {
       tft.println(" 10.0 +  um:");
     }
 
+    // Detect a button press.
+    if (aeroSpecLabel.contains(xCord, yCord) && p.z > 0) {
+      nextState = Home;
+    }
+
+    // Only update the text if there is new sensor data.
+    if (!updateAQI) {
+      return;
+    }
+
     PM_1_0Label.update(PM_1_0);
     PM_2_5Label.update(PM_2_5);
     PM_10_0Label.update(PM_10_0);
@@ -559,9 +577,7 @@ void updateScreen() {
     NumP_2_5Label.update(NumP_2_5);
     NumP_5_0Label.update(NumP_5_0);
     NumP_10_0Label.update(NumP_10_0);
-    
-    if(aeroSpecLabel.contains(xCord, yCord) && p.z > 0) {
-      nextState = Home;
-    }
+
+
   }
 }
