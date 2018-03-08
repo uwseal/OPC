@@ -85,11 +85,14 @@ void setup()
   // USB Serial 9600 baud.
   Serial.begin(9600);
 
+  // Plantower Senser 9600.
+  Serial1.begin(9600);
+
   // HC-05 9600 baud.
   Serial2.begin(9600);
 
-  // Plantower Senser 9600.
-  Serial1.begin(9600);
+  // Node MCU Wifi Module
+  Serial3.begin(9600);
 
   tft.reset();
   tft.begin(0x9341);
@@ -106,7 +109,6 @@ void setup()
 void loop()
 {
   if (Serial1.available() && Serial1.peek() != 0x42) {
-    Serial.println("Not 0x42");
     Serial1.read();
     return;
   }
@@ -426,6 +428,21 @@ void sendBluetooth()
 
   Serial2.print("NumP10.0,");
   Serial2.println(NumP_10_0);
+
+  Serial3.print("<");
+  Serial3.print("&field1=");
+  Serial3.print(PM_1_0);
+  Serial3.print("&field2=");
+  Serial3.print(AQI_1_0);
+  Serial3.print("&field3=");
+  Serial3.print(PM_2_5);
+  Serial3.print("&field4=");
+  Serial3.print(AQI_2_5);
+  Serial3.print("&field5=");
+  Serial3.print(PM_10_0);
+  Serial3.print("&field6=");
+  Serial3.print(AQI_10_0);
+  Serial3.print("\n");
 }
 
 void initializeScreen() {
@@ -515,7 +532,7 @@ void updateScreen() {
     if (aeroSpecLabel.contains(xCord, yCord) && p.z > 0) {
       nextState = Home;
     }
-    
+
     // Only update the text if there is new sensor data.
     if (!updateAQI) {
       return;
