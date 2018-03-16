@@ -75,7 +75,8 @@ Label NumP_2_5Label(150, 258, 100, 16, &tft);
 Label NumP_5_0Label(150, 274, 100, 16, &tft);
 Label NumP_10_0Label(150, 290, 100, 16, &tft);
 
-Label AQI_2_5Label(60, 150, 140, 100, &tft);
+Label AQI_2_5Label(40, 150, 180, 100, &tft);
+Label aqiStatusLabel(0, 270, 240, 50, &tft);
 
 Label aeroSpecLabel(0, 0, 240, 50, &tft);
 Label aqiLabel(40, 100, 150, 60, &tft);
@@ -515,16 +516,6 @@ void updateScreen() {
 
     if (updateRect) {
 
-      tft.setCursor(25, 265);
-      tft.setTextColor(BLACK);
-      tft.setTextSize(3);
-      tft.println("Air Quality");
-
-      tft.setCursor(0, 290);
-      tft.setTextColor(BLACK);
-      tft.setTextSize(3);
-      tft.println("    Clean");
-
       tft.setCursor(55, 80);
       tft.setTextColor(WHITE);
       tft.setTextSize(8);
@@ -540,10 +531,55 @@ void updateScreen() {
       return;
     }
 
-    AQI_2_5Label.setColor(WHITE, BLACK);
+    String message = "";
+    int color;
+    int textSize;
+    
+    // Get status of AQI to display
+    if (AQI_2_5 < 51){
+      message = "Good";
+      color = GREEN;
+      textSize = 4;
+    }else if (AQI_2_5 < 101){
+      message = "Moderate";
+      color = YELLOW;
+      textSize = 3;
+    }else if (AQI_2_5 < 151){
+      message = "Unhealthy to Some";
+      color = 0xFF80;
+      textSize = 2;
+    }else if (AQI_2_5 < 201){
+      message = "Unhealthy";
+      color = RED;
+      textSize = 3;
+    }else if (AQI_2_5 < 301){
+      message = "Very Unhealthy";
+      color = MAGENTA;
+      textSize = 2;
+    }else{
+      message = "Hazardous";
+      color = 0xF000;
+      textSize = 3;
+    }
+
+
+    // Displays the aqi value
+    AQI_2_5Label.setColor(color, BLACK);
     AQI_2_5Label.setCentered(true);
     AQI_2_5Label.setSize(10);
     AQI_2_5Label.update(AQI_2_5);
+
+    // Converts message from String to char Array
+    // to work with Label.cpp
+    int messageLen = message.length() + 1;
+    char charMessage[messageLen];
+    message.toCharArray(charMessage, messageLen);
+
+    // Displays message with AQI status
+    aqiStatusLabel.setColor(WHITE, color);
+    aqiStatusLabel.setCentered(true);
+    aqiStatusLabel.setSize(textSize);
+    aqiStatusLabel.update(charMessage);
 
 
   } else if (currentState == Data) {
