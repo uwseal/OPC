@@ -75,6 +75,8 @@ Label NumP_2_5Label(150, 258, 100, 16, &tft);
 Label NumP_5_0Label(150, 274, 100, 16, &tft);
 Label NumP_10_0Label(150, 290, 100, 16, &tft);
 
+Label AQI_2_5Label(60, 150, 140, 100, &tft);
+
 Label aeroSpecLabel(0, 0, 240, 50, &tft);
 Label aqiLabel(40, 100, 150, 60, &tft);
 Label particleLabel(40, 190, 150, 60, &tft);
@@ -538,9 +540,10 @@ void updateScreen() {
       return;
     }
 
-    tft.setCursor(60, 170);
-    tft.setTextColor(GREEN);
-    tft.setTextSize(10);
+    AQI_2_5Label.setColor(WHITE, BLACK);
+    AQI_2_5Label.setCentered(true);
+    AQI_2_5Label.setSize(10);
+    AQI_2_5Label.update(AQI_2_5);
 
 
   } else if (currentState == Data) {
